@@ -1,0 +1,22 @@
+sudo:required
+services:
+  - docker
+
+before_install:
+  - docker build -t cohs88/react-test -f ./client/Dockerfile.dev ./client
+
+script:
+  - docker run -e CI=true USERNAME/react-test npm test -- --coverage
+
+after_success:
+  - docker build -t cohs88/multi-client ./client
+  - docker build -t cohs88/multi-nginx ./nginx
+  - docker build -t cohs88/multi-server ./server
+  - docker build -t cohs88/multi-worker ./worker
+  # log in to the docker cli
+  - echo "$DOCKER_PASSWORD" | docker login -u "$DOCKER_ID" --password-stdin
+  # take those images to docker
+  - docker push cohs88/multi-client
+  - docker push cohs88/multi-nginx
+  - docker push cohs88/multi-server
+  - docker push cohs88/multi-worker
